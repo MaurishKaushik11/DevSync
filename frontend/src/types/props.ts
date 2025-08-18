@@ -25,8 +25,8 @@ export interface SettingsWindowProps {
   currentLanguage: string;
   onLanguageChange: (language: string) => void;
   availableLanguages: Array<{ value: string; label: string }>;
-  currentTheme: "codeCafeTheme" | "transparentTheme";
-  onThemeChange: (theme: "codeCafeTheme" | "transparentTheme") => void;
+  currentTheme: "devSyncTheme" | "transparentTheme";
+  onThemeChange: (theme: "devSyncTheme" | "transparentTheme") => void;
   currentFontSize: string;
   onFontSizeChange: (fontSize: string) => void;
   currentWordWrap: boolean;

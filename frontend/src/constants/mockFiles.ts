@@ -15,11 +15,11 @@ export const MOCK_FILES: { [key: string]: MockFile } = {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CodeCafe Live Preview</title>
+    <title>DevSync Live Preview</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <h1>Welcome to CodeCafe!</h1>
+    <h1>Welcome to DevSync!</h1>
     <p>Edit index.html, style.css, and script.js to see changes live.</p>
     <button id="myButton">Click Me!</button>
 
@@ -83,7 +83,7 @@ body.dark-mode button:hover {
   "script.js": {
     name: "script.js",
     language: "javascript",
-    content: `console.log("CodeCafe script loaded!");
+    content: `console.log("DevSync script loaded!");
 
 document.addEventListener('DOMContentLoaded', () => {
     const button = document.getElementById('myButton');

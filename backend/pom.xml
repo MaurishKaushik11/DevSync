@@ -11,8 +11,8 @@
 	<groupId>com.devsync</groupId>
 	<artifactId>backend</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>CodeCafe Backend</name>
-	<description>A backend service for handling code execution requests on the CodeCafe platform.</description>
+	<name>DevSync Backend</name>
+	<description>A backend service for handling code execution requests on the DevSync platform.</description>
 	<url/>
 	<licenses>
 		<license/>

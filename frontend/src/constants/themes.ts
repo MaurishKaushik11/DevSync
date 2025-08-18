@@ -3,8 +3,8 @@ import * as monaco from "monaco-editor";
 export type ThemeKey = keyof typeof THEMES;
 
 export const THEMES = {
-  codeCafeTheme: {
-    label: "CodeCafe",
+  devSyncTheme: {
+    label: "DevSync",
     config: {
       base: "vs-dark",
       inherit: true,

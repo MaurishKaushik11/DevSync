@@ -45,7 +45,7 @@ const TerminalComponent = forwardRef<TerminalHandle, TerminalComponentProps>(
         terminalInstance.current = term;
         fitAddonRef.current = fitAddon;
 
-        term.write("Welcome to CodeCafe!\r\n");
+        term.write("Welcome to DevSync!\r\n");
         writePrompt(term);
 
         // Handle user input

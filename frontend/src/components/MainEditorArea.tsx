@@ -144,7 +144,7 @@ const MainEditorArea = ({
             </div>
           ) : activeFileId && openFiles.find((f) => f.id === activeFileId) ? (
             <CodeEditor
-              theme="codeCafeTheme"
+              theme="devSyncTheme"
               language={
                 editorLanguageMap[
                   openFiles.find((f) => f.id === activeFileId)?.language ||

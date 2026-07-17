@@ -1,0 +1,64 @@
+# Render Blueprint for the DevSync backend (Spring Boot + PostgreSQL + Redis).
+# Deploy from the Render dashboard: New + -> Blueprint -> connect this repo.
+# All three resources use Render's free plan.
+services:
+  - type: web
+    name: devsync-api
+    runtime: docker
+    plan: free
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /actuator/health
+    autoDeploy: true
+    envVars:
+      # Bind Spring Boot to the port Render expects; matches Dockerfile EXPOSE.
+      - key: PORT
+        value: "8080"
+      # Constrain the JVM heap for the 512 MB free instance.
+      - key: JAVA_TOOL_OPTIONS
+        value: "-XX:MaxRAMPercentage=70.0"
+      # Generated once by Render; >= 32 bytes as required by JwtService.
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_ACCESS_TOKEN_MINUTES
+        value: "15"
+      - key: JWT_GUEST_TOKEN_MINUTES
+        value: "120"
+      - key: REFRESH_TOKEN_DAYS
+        value: "14"
+      # Cross-site frontend (Vercel) <-> backend (Render) requires SameSite=None; Secure.
+      - key: COOKIE_SECURE
+        value: "true"
+      - key: COOKIE_SAME_SITE
+        value: "None"
+      - key: GITHUB_OAUTH_ENABLED
+        value: "false"
+      # Frontend origin(s). Update to your exact Vercel production URL, comma-separated.
+      - key: FRONTEND_URL
+        sync: false
+      - key: ALLOWED_ORIGINS
+        sync: false
+      # Managed PostgreSQL connection (Heroku-style URL parsed by DatabaseUrlEnvironmentPostProcessor).
+      - key: DATABASE_URL
+        fromDatabase:
+          name: devsync-db
+          property: connectionString
+      # Managed Redis connection (parsed by RedisUrlEnvironmentPostProcessor).
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: devsync-redis
+          property: connectionString
+
+  - type: redis
+    name: devsync-redis
+    plan: free
+    # Empty allow list = reachable only from within the Render private network.
+    ipAllowList: []
+
+databases:
+  - name: devsync-db
+    plan: free
+    databaseName: devsync
+    user: devsync

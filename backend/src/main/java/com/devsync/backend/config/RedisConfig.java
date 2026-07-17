@@ -33,8 +33,8 @@ public class RedisConfig {
     @Value("${spring.redis.ssl.enabled:false}") // Inject SSL property, default to false if not set
     private boolean redisSslEnabled;
 
-    // @Value("${spring.redis.password}")
-    // private String redisPassword;
+    @Value("${spring.redis.password:}")
+    private String redisPassword;
 
     @PostConstruct
     public void logRedisConfig() {
@@ -42,6 +42,7 @@ public class RedisConfig {
         logger.info("Redis Host from @Value: {}", redisHost);
         logger.info("Redis Port from @Value: {}", redisPort);
         logger.info("Redis SSL Enabled from @Value: {}", redisSslEnabled);
+        logger.info("Redis Password configured: {}", (redisPassword != null && !redisPassword.isEmpty()));
         logger.info("--- End Custom RedisConfig Initializing ---");
     }
 
@@ -57,10 +58,9 @@ public class RedisConfig {
         RedisStandaloneConfiguration redisStandaloneConfiguration = new RedisStandaloneConfiguration();
         redisStandaloneConfiguration.setHostName(redisHost);
         redisStandaloneConfiguration.setPort(redisPort);
-        // Configure password if/when AUTH is enabled
-        // if (redisPassword != null && !redisPassword.isEmpty()) {
-        //    redisStandaloneConfiguration.setPassword(redisPassword);
-        // }
+        if (redisPassword != null && !redisPassword.isEmpty()) {
+            redisStandaloneConfiguration.setPassword(redisPassword);
+        }
 
         LettuceClientConfiguration clientConfig;
         if (redisSslEnabled) {

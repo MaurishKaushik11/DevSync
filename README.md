@@ -50,9 +50,11 @@ Implemented on branch `feat/phase-1-auth-persistence`:
 
 ---
 
-## In-browser Node.js previews
+## Experimental in-browser Node.js previews (disabled)
 
-Imported JavaScript/TypeScript repositories with a `package.json` can run directly in DevSync through the WebContainer API:
+The WebContainer implementation is retained for future work but is disabled by default while compatibility is revalidated. Production currently uses the stable static HTML/CSS/JS preview.
+
+When explicitly enabled with `VITE_NODE_PREVIEW_ENABLED=true` and the required COOP/COEP deployment headers, imported JavaScript/TypeScript repositories with a `package.json` can run through the WebContainer API:
 
 - React/Vite and Vue/Vite (`npm run dev`)
 - Next.js (`npm run dev`)
@@ -61,7 +63,7 @@ Imported JavaScript/TypeScript repositories with a `package.json` can run direct
 
 Click **Run** in the workspace. DevSync mounts the imported source into a browser-isolated Node.js runtime, installs npm dependencies, streams logs to the terminal, and opens the detected development server in Live Preview. Edited files are written back to the runtime so framework hot reload can update the preview.
 
-This requires a modern browser with cross-origin isolation support. Vercel and the local Vite server provide the required COOP/COEP headers. It does not run Python or Java; those require a separate server-side sandbox. Credential files (`.env*`, private keys, and common credential JSON files) are excluded from repository imports and runtime mounts.
+This requires a modern browser with cross-origin isolation support. It does not run Python or Java; those require a separate server-side sandbox. Credential files (`.env*`, private keys, and common credential JSON files) are excluded from repository imports and runtime mounts.
 
 ---
 

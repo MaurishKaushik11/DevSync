@@ -36,7 +36,7 @@ import MainEditorArea from "./MainEditorArea";
 import { useFileStore } from "../store/useFileStore";
 import { Analytics } from "@vercel/analytics/react";
 import type { RoomDetail, RoomRole } from "../types/room";
-import { getBackendUrl } from "../config/env";
+import { getBackendUrl, isNodePreviewEnabled } from "../config/env";
 import { fetchRoomFileContent } from "../services/roomService";
 import { effectiveCanEdit } from "../utils/roomImport";
 import {
@@ -383,6 +383,7 @@ const Workspace = ({ room, identity, role, canEdit }: WorkspaceProps) => {
 
   const hasNodeProject = useMemo(
     () =>
+      isNodePreviewEnabled() &&
       runtimeProjectFiles.some(
         (file) =>
           file.path.replace(/\\/g, "/").replace(/^\.\/+/, "") ===

@@ -1,151 +1,180 @@
-# DevSync: Code Together, Instantly.
+# DevSync
 
-![Build](https://img.shields.io/github/actions/workflow/status/MaurishPandat/DevSync/ci.yml?branch=main\&label=build\&style=for-the-badge\&logo=github)
-![GitHub stars](https://img.shields.io/github/stars/MaurishPandat/DevSync?style=for-the-badge\&logo=github\&cacheSeconds=60)
-![Contributions Welcome](https://img.shields.io/badge/contributions-welcome-brightgreen?style=for-the-badge)
-![MIT License](https://img.shields.io/github/license/MaurishPandat/DevSync?style=for-the-badge\&label=license)
+**Instant, zero-setup pair programming and technical interviews.**
 
-A hyper-collaborative, real-time development environment right in your browser. **DevSync** makes pair programming, teaching, and building web projects together as fluid and instant as sharing a thought.
+An engineering manager or interviewer creates a room, shares a link, and a candidate joins in seconds — **no signup required for guests**. Hosts get durable rooms they can reopen; Redis keeps the live OT stream authoritative while PostgreSQL stores accounts, rooms, and file snapshots.
 
-<!-- Optional live link -->
+<!-- Add a short demo GIF/screenshot here -->
+<!-- ![DevSync workspace](./docs/devsync-demo.gif) -->
 
-<!-- [Try DevSync Live!](https://devsync.app/) -->
-
-<!--
-![image](https://github.com/user-attachments/assets/your-screenshot-id)
--->
-
-[Click here to watch the demo video!](https://youtu.be/FL0qg1Uo-MQ?si=czYlT2vyO6qMIyL1)
+[Demo video (legacy UI)](https://youtu.be/FL0qg1Uo-MQ?si=czYlT2vyO6qMIyL1) · Live editor: [dev-sync-eight.vercel.app](https://dev-sync-eight.vercel.app)
 
 ---
 
-## 🚀 Why DevSync?
+## Why I built this
 
-Most collaborative coding tools feel like they're made for documents, not developers. DevSync is purpose-built for code collaboration — whether it's live teaching, remote pair programming, or just hacking together in real time. Built from scratch using WebSockets and Monaco Editor, DevSync is light, fast, and made for code.
-
----
-
-## 🔥 Core Features
-
-* **Live Code Preview:** Instant rendering of HTML/CSS/JS inside the browser.
-* **True Real-Time Collaboration:** Built using a custom Operational Transformation engine.
-* **VS Code-Like Feel:** Powered by Monaco Editor for syntax highlighting, linting, suggestions, and more.
-* **Terminal Built-In:** Integrated terminal with Xterm.js support.
-* **Zero Setup:** No Docker required. Just run two commands and start coding.
+Most “collaborative editors” optimize for documents. Interview and pairing workflows need something different: **fast guest time-to-first-keystroke**, a host retention loop (rooms that persist), and a path to **reviewable sessions**. DevSync is being rebuilt around that product story — starting with auth, durable rooms, and role-aware collaboration — while keeping the custom OT engine and live HTML/CSS/JS preview as the core realtime system.
 
 ---
 
-## 🛠️ Tech Stack
+## Who it’s for
 
-**Frontend**
-
-* React + TypeScript
-* Vite + Tailwind CSS
-* Zustand (state management)
-* Monaco Editor + Xterm.js
-* Framer Motion + Axios + WebSocket Client
-
-**Backend**
-
-* Spring Boot (Java)
-* WebSocket API
-* Jackson (JSON parser)
-
-**Realtime Engine**
-
-* Custom Operational Transformation (OT) implementation
-* Redis (local or AWS ElastiCache)
-* Lua Scripting for atomic operations
-
-**Hosting**
-
-* Frontend: Vercel
-* Backend: AWS EC2
-* Redis: AWS ElastiCache / Local Redis
+| Persona | What they need |
+|---|---|
+| **Host / interviewer** | Account, create rooms, invite via link, reopen work later |
+| **Guest / candidate** | Join with display name only — no account gate |
+| **Viewer** (future invites) | Read-only presence without mutating code |
 
 ---
 
-## 🧠 Operational Transformation
+## What’s in Phase 1 (Auth, Persistence, Identity)
 
-DevSync uses OT to handle collaborative edits just like Google Docs:
+Implemented on branch `feat/phase-1-auth-persistence`:
 
-* Transforms user operations (insert/delete) in real time
-* Resolves conflicts automatically
-* Guarantees consistency across users
-* Maintains intention-preserving edits
+- **PostgreSQL** as system of record (Flyway `V1__schema.sql`)
+- **Redis** remains live authority for OT content/history + presence (not replaced)
+- **Auth:** email/password signup & login, JWT access tokens, opaque refresh tokens (HttpOnly cookie, SHA-256 hashed at rest), optional GitHub OAuth
+- **Entities:** `AppUser`, `Room`, `RoomFile`, `RoomMember` (`HOST` / `EDITOR` / `VIEWER`), `CollaborationSession`, `RefreshToken`
+- **Guest join:** `POST /api/rooms/join/{shareId}` → ephemeral guest JWT scoped to room/session (no `AppUser` row)
+- **My Rooms dashboard:** create / rejoin / rename / delete, sorted by last activity
+- **Public GitHub import:** shallow clone into a durable room; text files up to 25 MiB, with files over 1 MiB opened read-only outside the OT stream
+- **Debounced snapshots:** accepted OT ops schedule ~3s inactivity flush of Redis → `RoomFile`; explicit save + session end also persist
+- **RBAC:** HOST/EDITOR write; VIEWER read-only (UI + server/STOMP); HOST-only rename/delete/end
+- **Frontend routes:** `/login`, `/signup`, `/auth/callback`, `/rooms`, `/rooms/:roomId`, `/join/:shareId`
 
-> Our OT engine is built in both backend and frontend for minimal latency and maximum collaboration.
+### Product decisions worth noting
+
+1. **Guest access without signup** — interview friction killer; host is the only account required to create rooms.
+2. **Redis live + Postgres durable** — OT stays low-latency; Postgres survives restarts/refresh.
+3. **Filename document IDs in Redis** (`index.html`, `style.css`, `script.js`) — preserves live-preview sync; Postgres file UUIDs are used only for REST save.
 
 ---
 
-## ⚙️ Quick Start
+## Architecture (high level)
 
-### Option 1: Manual Setup (Recommended)
+```
+Browser (React + Monaco + OT client)
+   │  REST (auth, rooms) + SockJS/STOMP (/ws)
+   ▼
+Spring Boot
+   ├── Security (JWT account + guest principals)
+   ├── Room / Auth services → PostgreSQL (Flyway)
+   └── OT + presence → Redis (content, history, participants)
+```
 
-**Requirements:** Java 17+, Maven, Node.js 18+, Redis
+**STOMP contracts preserved:** `/app/join`, `/app/operation`, `/app/get-document-state`, `/app/selection`, `/app/chat` and `/topic/sessions/{sessionId}/…` destinations.
+
+> Note: the message broker is still the Spring in-memory simple broker. Horizontal WebSocket fan-out across multiple app instances is a later hardening phase (Redis pub/sub broker).
+
+---
+
+## Tech stack
+
+**Frontend:** React, TypeScript, Vite, Tailwind, Zustand, Monaco, Xterm.js, React Router, Axios
+**Backend:** Spring Boot 3.4 / Java 17, Spring Security, JJWT, Spring Data JPA, Flyway, WebSocket/STOMP
+**Data:** PostgreSQL 16, Redis 7
+**Realtime:** Custom Operational Transformation (frontend + backend)
+
+---
+
+## Quick start
+
+### Prerequisites
+
+- Node.js 18+
+- Java 17+
+- Redis (local binary or Docker)
+- PostgreSQL 16 **or** the `local` demo profile (H2) below
+
+### Option A — Local demo (no Docker)
+
+Useful when Docker/Postgres aren’t available. Redis is still required for live OT.
 
 ```bash
-# Clone the project
-https://github.com/MaurishPandat/DevSync.git
-cd DevSync
+# 1) Start Redis (example if installed to ~/.local/bin)
+redis-server --daemonize yes --port 6379
 
-# Start Redis (separately)
-redis-server &
-
-# Backend setup
+# 2) Backend with local profile (file-backed H2 + Flyway)
 cd backend
-./mvnw install
-./mvnw spring-boot:run &
+./mvnw spring-boot:run -Dspring-boot.run.profiles=local
 
-# Frontend setup
+# 3) Frontend
 cd ../frontend
+cp .env.example .env   # set VITE_BACKEND_URL=http://localhost:8080
 npm install
 npm run dev
 ```
 
-Access at: `http://localhost:5173`
+Open `http://localhost:5173` → sign up → create a room → share `/join/{shareId}` in another browser/profile.
 
----
+> Production should use PostgreSQL (`docker compose up -d` + env datasource). The `local` profile is for development demos only.
 
-### Option 2: Docker Setup (Optional)
+### Option B — Docker Postgres + Redis
 
 ```bash
-docker-compose up --build
+cp .env.example .env
+# Required: POSTGRES_PASSWORD, JWT_SECRET (>= 32 chars)
+docker compose up -d
+
+cd backend && ./mvnw spring-boot:run
+cd ../frontend && npm install && npm run dev
 ```
 
-Visit: `http://localhost`
+---
+
+## API surface (Phase 1)
+
+| Method | Path | Auth |
+|--------|------|------|
+| POST | `/api/auth/signup`, `/login`, `/refresh`, `/logout` | public |
+| GET | `/api/auth/me` | account JWT |
+| GET/POST | `/api/rooms` | account |
+| GET/PATCH/DELETE | `/api/rooms/{id}` | member / HOST |
+| POST | `/api/rooms/join/{shareId}` | public → guest JWT |
+| POST | `/api/rooms/import` | account; public GitHub URL only |
+| GET | `/api/rooms/{id}/files/{fileId}/content` | room member / scoped guest |
+| POST | `/api/rooms/{id}/files/{fileId}/save` | HOST/EDITOR |
+| POST | `/api/rooms/{id}/end` | HOST |
+| GET | `/oauth2/authorization/github` | optional OAuth start |
+
+Refresh token: **HttpOnly / Secure(configurable) / SameSite** cookie. Access token returned in JSON and kept **in memory** on the client (not `localStorage`). Guest token may use `sessionStorage` for same-tab refresh only.
 
 ---
 
-## 🧪 CI/CD Pipeline
+## Tests
 
-GitHub Actions for automatic builds & deployment:
+```bash
+# Backend (H2 + mocked Redis; no external services required)
+cd backend && ./mvnw test
 
-* ✅ Run backend & frontend tests on push
-* 🚀 Deploy backend to AWS EC2
-* ⚡ Deploy frontend to Vercel
+# Frontend
+cd frontend && npm test -- --runInBand
+```
 
-### To enable for your fork:
+Phase 1 coverage includes auth/refresh rotation, room RBAC, guest join, snapshot debounce behavior (backend), plus auth store / dashboard / hydrate / OT suites (frontend).
 
-* **AWS Secrets:** `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION`
-* **Vercel Secrets:** `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`
-
----
-
-## 🧭 Roadmap
-
-* ✅ Authentication and persistent projects
-* 🗣️ Voice + Chat integration
-* 🎥 Session playback and history
-* 🔧 More languages (Python, C++, etc.)
-* 🧩 Plugin system for custom tools
+Repository import is bounded by `IMPORT_MAX_FILE_BYTES` (25 MiB default),
+`IMPORT_MAX_TOTAL_BYTES` (100 MiB), and `IMPORT_MAX_FILES` (2,000). Generated
+dependency/build directories, symlinks, binary files, and unsafe paths are skipped.
+Files larger than `IMPORT_COLLABORATION_MAX_BYTES` (1 MiB) are lazy-loaded
+read-only and never inserted into Redis OT history.
 
 ---
 
-## 📄 License
+## Roadmap
 
-MIT © [Maurish Kaushik](https://github.com/MaurishPandat)
+| Phase | Status | Focus |
+|-------|--------|--------|
+| **1** | **In progress (this branch)** | Auth, Postgres persistence, guest join, My Rooms, RBAC, debounced snapshots |
+| 2 | Planned | Interview Mode (timer, prompt, private interviewer notes) |
+| 3 | Planned | Session recording & OT playback |
+| 4 | Planned | Multi-language sandboxed execution |
+| 5 | Planned | Landing page, onboarding, design system polish |
+| 6 | Planned | Host analytics & org accounts |
+| 7 | Planned | Production hardening (multi-instance WS, reconnect, metrics, OT concurrency CI) |
 
 ---
 
-*Making collaborative coding magical for everyone. ✨*
+## License
+
+MIT © [Maurish Kaushik](https://github.com/MaurishKaushik11)

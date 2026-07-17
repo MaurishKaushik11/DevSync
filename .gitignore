@@ -2,3 +2,17 @@
 /node_modules
 /package-lock.json
 /package.json
+
+# Secrets / local env (keep .env.example)
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+
+# Backend build / local H2 demo data
+backend/target/
+backend/data/
+*.mv.db
+*.trace.db

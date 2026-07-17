@@ -1,8 +1,10 @@
 import { useRef, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { FiCopy, FiPlay, FiUsers } from "react-icons/fi";
 import { HeaderProps } from "../types/props";
 import { COLORS } from "../constants/colors";
+import { useAuthStore } from "../store/useAuthStore";
 
 const Header = ({
   isViewMenuOpen,
@@ -27,12 +29,19 @@ const Header = ({
   isSessionActive,
   uniqueRemoteParticipants,
   setIsColorPickerOpen,
+  roomName,
+  role,
+  isGuest = false,
+  saveStatus = "idle",
 }: HeaderProps) => {
   const headerRef = useRef<HTMLDivElement>(null);
   const viewMenuButtonRef = useRef<HTMLButtonElement>(null);
   const viewMenuRef = useRef<HTMLDivElement>(null);
   const shareButtonRef = useRef<HTMLButtonElement>(null);
   const shareMenuRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
+  const user = useAuthStore((s) => s.user);
+  const logout = useAuthStore((s) => s.logout);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -76,13 +85,27 @@ const Header = ({
     setIsColorPickerOpen,
   ]);
 
+  const handleLogout = async () => {
+    await logout();
+    navigate("/login", { replace: true });
+  };
+
+  const saveLabel =
+    saveStatus === "saving"
+      ? "Saving…"
+      : saveStatus === "saved"
+        ? "Saved"
+        : saveStatus === "error"
+          ? "Save failed"
+          : null;
+
   return (
     <div
       ref={headerRef}
       className="flex items-stretch justify-between bg-ink-850/95 border-b border-ink-500 flex-shrink-0 relative h-12 backdrop-blur-md"
     >
-      <div className="flex items-stretch">
-        <div className="flex items-center gap-2.5 px-4 border-r border-ink-500 mr-1">
+      <div className="flex items-stretch min-w-0">
+        <div className="flex items-center gap-2.5 px-4 border-r border-ink-500 mr-1 flex-shrink-0">
           <div className="relative flex h-7 w-7 items-center justify-center rounded-md bg-signal/15 ring-1 ring-signal/30">
             <span className="font-display text-[13px] font-800 font-bold text-signal leading-none">
               DS
@@ -93,13 +116,21 @@ const Header = ({
             <span className="font-display text-sm font-bold tracking-tight text-mist-100">
               DevSync
             </span>
-            <span className="mt-0.5 font-mono text-[9px] uppercase tracking-[0.16em] text-mist-500">
-              Live workspace
+            <span className="mt-0.5 font-mono text-[9px] uppercase tracking-[0.16em] text-mist-500 truncate max-w-[140px]">
+              {roomName || "Live workspace"}
             </span>
           </div>
         </div>
 
         <div className="flex h-full">
+          {!isGuest && (
+            <Link
+              to="/rooms"
+              className="ds-btn h-full flex items-center px-3"
+            >
+              Rooms
+            </Link>
+          )}
           <button className="ds-btn h-full flex items-center px-3" type="button">
             File
           </button>
@@ -159,7 +190,28 @@ const Header = ({
         )}
       </div>
 
-      <div className="flex items-stretch gap-1 pr-2">
+      <div className="flex items-stretch gap-1 pr-2 flex-shrink-0">
+        {saveLabel && (
+          <div className="flex items-center px-2">
+            <span
+              className={`text-[10px] font-mono uppercase tracking-wider ${
+                saveStatus === "error" ? "text-red-400" : "text-mist-500"
+              }`}
+              aria-live="polite"
+            >
+              {saveLabel}
+            </span>
+          </div>
+        )}
+
+        {role && (
+          <div className="flex items-center px-1">
+            <span className="rounded-full bg-ink-700 px-2.5 py-1 text-[10px] font-mono uppercase tracking-wider text-mist-400 ring-1 ring-ink-500">
+              {isGuest ? "Guest" : role}
+            </span>
+          </div>
+        )}
+
         {isSessionActive && (
           <div className="flex items-center gap-2 px-2">
             <span className="hidden sm:inline-flex items-center gap-1.5 rounded-full bg-signal/10 px-2.5 py-1 text-[10px] font-mono uppercase tracking-wider text-signal ring-1 ring-signal/25">
@@ -168,20 +220,35 @@ const Header = ({
             </span>
             {uniqueRemoteParticipants.length > 0 && (
               <div className="flex items-center -space-x-2">
-                {uniqueRemoteParticipants.map((user) => (
+                {uniqueRemoteParticipants.map((u) => (
                   <div
-                    key={user.id}
+                    key={u.id}
                     className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold ring-2 ring-ink-850 cursor-default shadow-sm"
-                    style={{ backgroundColor: user.color }}
-                    title={user.name}
+                    style={{ backgroundColor: u.color }}
+                    title={u.name}
                   >
                     <span className="text-white/95 select-none">
-                      {user.name ? user.name[0].toUpperCase() : "?"}
+                      {u.name ? u.name[0].toUpperCase() : "?"}
                     </span>
                   </div>
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {!isGuest && user && (
+          <div className="flex items-center gap-1 px-2 border-l border-ink-500 ml-1">
+            <span className="hidden md:inline text-xs text-mist-400 max-w-[100px] truncate">
+              {user.displayName}
+            </span>
+            <button
+              type="button"
+              onClick={() => void handleLogout()}
+              className="text-xs text-mist-500 hover:text-mist-100 px-2 py-1 rounded-md hover:bg-ink-600"
+            >
+              Log out
+            </button>
           </div>
         )}
 
@@ -287,10 +354,10 @@ const Header = ({
                 {shareMenuView === "link" && generatedShareLink && (
                   <div className="flex flex-col">
                     <p className="font-display text-sm font-semibold text-mist-100 mb-1">
-                      Session ready
+                      Invite collaborators
                     </p>
                     <p className="text-xs text-mist-500 mb-3">
-                      Share this link — collaborators join instantly.
+                      Share this link — guests join instantly at /join/…
                     </p>
                     <div className="flex items-stretch gap-0 bg-ink-900 border border-ink-500 rounded-md overflow-hidden">
                       <input

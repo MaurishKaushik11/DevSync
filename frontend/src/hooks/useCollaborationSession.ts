@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { getBackendUrl } from "../config/env";
 import SockJS from "sockjs-client";
 import Stomp from "stompjs";
 import {
@@ -52,6 +53,7 @@ export const useCollaborationSession = ({
   activeFileId,
   editorInstance,
   isSessionActive,
+  canEdit = true,
   onStateReceived,
   onOperationReceived,
   onRemoteUsersUpdate,
@@ -144,7 +146,7 @@ export const useCollaborationSession = ({
       adapterRef.current = null;
     }
 
-    const socketUrl = import.meta.env.VITE_BACKEND_URL + "/ws";
+    const socketUrl = getBackendUrl() + "/ws";
     const socket = new SockJS(socketUrl);
     const stompClient = Stomp.over(socket);
     stompClient.debug = () => {}; // Suppress STOMP debug logs in console
@@ -200,6 +202,7 @@ export const useCollaborationSession = ({
 
         const clientCallbacks: IClientCallbacks = {
           sendOperation: (revision: number, operation: TextOperation) => {
+            if (!canEdit) return;
             if (
               stompClientRef.current?.connected &&
               sessionId &&
@@ -415,17 +418,30 @@ export const useCollaborationSession = ({
 
                 // Register OT callbacks *after* client is initialized and editor potentially updated
                 if (adapterRef.current) {
-                  adapterRef.current.registerCallbacks({
-                    change: (op: TextOperation) => {
-                      clientRef.current?.applyClient(op);
-                    },
-                    selectionChange: () => {
-                      clientRef.current?.selectionChanged();
-                    },
-                    blur: () => {
-                      clientRef.current?.blur();
-                    },
-                  });
+                  if (canEdit) {
+                    adapterRef.current.registerCallbacks({
+                      change: (op: TextOperation) => {
+                        clientRef.current?.applyClient(op);
+                      },
+                      selectionChange: () => {
+                        clientRef.current?.selectionChanged();
+                      },
+                      blur: () => {
+                        clientRef.current?.blur();
+                      },
+                    });
+                  } else {
+                    // VIEWER: receive remote ops only — do not send local edits
+                    adapterRef.current.registerCallbacks({
+                      change: () => {},
+                      selectionChange: () => {
+                        clientRef.current?.selectionChanged();
+                      },
+                      blur: () => {
+                        clientRef.current?.blur();
+                      },
+                    });
+                  }
                 }
               } else {
                 // If OT client *already* exists for this active file connection,
@@ -953,6 +969,7 @@ export const useCollaborationSession = ({
     userId,
     userInfo.name,
     userInfo.color,
+    canEdit,
     onStateReceived,
     onOperationReceived,
     onRemoteUsersUpdate,

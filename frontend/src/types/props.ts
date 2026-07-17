@@ -68,6 +68,7 @@ export interface CodeEditorProps {
   onLoadingChange?: (isLoading: boolean) => void;
   localUserId?: string;
   isSessionActive?: boolean;
+  readOnly?: boolean;
 }
 
 // Props for WebViewPanel component
@@ -119,6 +120,10 @@ export interface HeaderProps {
   isSessionActive: boolean;
   uniqueRemoteParticipants: RemoteUser[];
   setIsColorPickerOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  roomName?: string;
+  role?: string;
+  isGuest?: boolean;
+  saveStatus?: "idle" | "saving" | "saved" | "error";
 }
 
 // Status Bar Component Types
@@ -150,6 +155,7 @@ export interface UseCollaborationSessionProps {
   activeFileId: string | null;
   editorInstance: editor.IStandaloneCodeEditor | null;
   isSessionActive: boolean;
+  canEdit?: boolean;
   onStateReceived: (
     fileId: string,
     content: string,

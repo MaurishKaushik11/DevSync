@@ -20,6 +20,7 @@ const CodeEditor = ({
   onEditorDidMount,
   localUserId,
   isSessionActive = false,
+  readOnly = false,
 }: CodeEditorProps) => {
   const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
   const decorationsRef = useRef<string[]>([]);
@@ -228,7 +229,7 @@ const CodeEditor = ({
         language={language}
         theme={theme}
         value={code}
-        options={editorOptions}
+        options={{ ...editorOptions, readOnly }}
         onMount={handleEditorDidMount}
         onChange={handleEditorChange}
         loading={<div>Loading Editor...</div>}

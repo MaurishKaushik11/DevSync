@@ -34,3 +34,7 @@ build/
 
 # Ignore Spring Boot properties file
 # src/main/resources/application.properties
+
+.env
+.env.*
+!.env.example

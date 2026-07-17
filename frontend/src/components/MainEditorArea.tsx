@@ -23,6 +23,7 @@ import {
   WEBVIEW_HANDLE_GRAB_WIDTH,
 } from "../constants/layout";
 import { useFileStore } from "../store/useFileStore";
+import { formatFileSize } from "../utils/roomImport";
 
 interface MainEditorAreaProps {
   // Refs
@@ -32,7 +33,7 @@ interface MainEditorAreaProps {
   editorInstanceRef: React.MutableRefObject<editor.IStandaloneCodeEditor | null>;
 
   // Editor
-  fileContents: { [id: string]: string };
+  fileContents: { [id: string]: string | null };
   handleCodeChange: (newCode: string) => void;
   handleEditorDidMount: (editorInstance: editor.IStandaloneCodeEditor) => void;
   currentRemoteUsers: RemoteUser[];
@@ -58,6 +59,11 @@ interface MainEditorAreaProps {
   joinState: JoinStateType;
   tabsHaveOverflow: boolean;
   onTabsOverflowChange: (hasOverflow: boolean) => void;
+  readOnly?: boolean;
+  contentLoading?: boolean;
+  contentLoadError?: string | null;
+  isLargeFileReadOnly?: boolean;
+  activeFileSizeBytes?: number;
 }
 
 type IconPropsForMappings = {
@@ -89,6 +95,11 @@ const MainEditorArea = ({
   joinState,
   tabsHaveOverflow,
   onTabsOverflowChange,
+  readOnly = false,
+  contentLoading = false,
+  contentLoadError = null,
+  isLargeFileReadOnly = false,
+  activeFileSizeBytes = 0,
 }: MainEditorAreaProps) => {
   const { openFiles, activeFileId } = useFileStore();
 
@@ -106,6 +117,9 @@ const MainEditorArea = ({
       defaultIconColor;
   }
 
+  const activeContent =
+    activeFileId != null ? fileContents[activeFileId] : undefined;
+
   return (
     <div className={`flex flex-1 min-w-0 relative`}>
       <div
@@ -121,7 +135,7 @@ const MainEditorArea = ({
         />
 
         {/* Breadcrumbs Area */}
-        <div className="h-7 flex-shrink-0 bg-ink-900 flex items-center px-3 text-sm text-mist-400 overflow-hidden whitespace-nowrap border-b border-ink-600/60">
+        <div className="h-7 flex-shrink-0 bg-ink-900 flex items-center px-3 text-sm text-mist-400 overflow-hidden whitespace-nowrap border-b border-ink-600/60 gap-2">
           {activeFile ? (
             <React.Fragment>
               <ActiveIconComponent
@@ -131,6 +145,17 @@ const MainEditorArea = ({
               <span className="font-mono text-xs text-mist-400">
                 {activeFile.name}
               </span>
+              {isLargeFileReadOnly && (
+                <span
+                  className="ml-auto flex-shrink-0 rounded px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wide text-amber-200/90 bg-amber-500/10 ring-1 ring-amber-500/25"
+                  title="Files over 1 MB are opened read-only without live collaboration"
+                >
+                  Large file · read-only
+                  {activeFileSizeBytes > 0
+                    ? ` · ${formatFileSize(activeFileSizeBytes)}`
+                    : ""}
+                </span>
+              )}
             </React.Fragment>
           ) : (
             <span />
@@ -148,6 +173,21 @@ const MainEditorArea = ({
                 Enter your details in the sidebar to join this live session.
               </p>
             </div>
+          ) : contentLoadError ? (
+            <div className="flex flex-col items-center justify-center h-full gap-2 px-6 text-center">
+              <p role="alert" className="text-sm text-red-400">
+                {contentLoadError}
+              </p>
+              <p className="text-xs text-mist-500">
+                Switch tabs or reopen the file to retry.
+              </p>
+            </div>
+          ) : contentLoading || (activeFileId && activeContent == null) ? (
+            <div className="flex flex-col items-center justify-center h-full gap-2 px-6 text-center">
+              <p className="text-sm text-mist-400" aria-live="polite">
+                Loading file…
+              </p>
+            </div>
           ) : activeFileId && openFiles.find((f) => f.id === activeFileId) ? (
             <CodeEditor
               theme="devSyncTheme"
@@ -158,12 +198,13 @@ const MainEditorArea = ({
                 ]
               }
               showLineNumbers={true}
-              code={fileContents[activeFileId] ?? "// Loading..."}
+              code={activeContent ?? ""}
               onCodeChange={handleCodeChange}
               onEditorDidMount={handleEditorDidMount}
               users={currentRemoteUsers}
               localUserId={localUserId}
               isSessionActive={isSessionActive}
+              readOnly={readOnly}
             />
           ) : (
             <div className="flex flex-col items-center justify-center h-full gap-2 px-6 text-center">

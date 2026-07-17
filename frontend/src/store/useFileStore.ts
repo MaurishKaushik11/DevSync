@@ -44,7 +44,12 @@ const initialSearchOptions: SearchOptions = {
 interface FileState {
   openFiles: OpenFile[];
   activeFileId: string | null;
-  fileContents: { [id: string]: string };
+  /** null = deferred / not yet loaded (large files) */
+  fileContents: { [id: string]: string | null };
+  /** Maps OT document id (filename) -> Postgres RoomFile UUID for save API */
+  persistenceIds: { [documentId: string]: string };
+  sizeBytes: { [documentId: string]: number };
+  collaborationEnabled: { [documentId: string]: boolean };
 
   draggingId: string | null;
   dropIndicator: { tabId: string | null; side: "left" | "right" | null };
@@ -54,6 +59,16 @@ interface FileState {
   replaceTerm: string;
   searchOptions: SearchOptions;
   matchInfo: MatchInfo | null;
+}
+
+export interface RoomFileInput {
+  id: string;
+  persistenceId?: string;
+  path: string;
+  language: string;
+  content: string | null;
+  sizeBytes?: number;
+  collaborationEnabled?: boolean;
 }
 
 interface FileActions {
@@ -67,6 +82,12 @@ interface FileActions {
   openFile: (fileId: string, isSessionActive: boolean) => void;
   closeFile: (fileIdToClose: string) => void;
   switchTab: (fileId: string) => void;
+  hydrateFromRoomFiles: (files: RoomFileInput[]) => void;
+  getPersistenceId: (documentId: string) => string | null;
+  getSizeBytes: (documentId: string) => number;
+  isCollaborationEnabled: (documentId: string) => boolean;
+  isContentLoaded: (documentId: string) => boolean;
+  resetToDefaults: () => void;
 
   // Search Actions
   setSearchTerm: (term: string) => void;
@@ -80,6 +101,9 @@ export const useFileStore = create<FileState & FileActions>((set, get) => ({
   openFiles: initialOpenFilesData,
   activeFileId: initialActiveFileId,
   fileContents: initialFileContents,
+  persistenceIds: {},
+  sizeBytes: {},
+  collaborationEnabled: {},
   draggingId: null,
   dropIndicator: { tabId: null, side: null },
 
@@ -105,41 +129,151 @@ export const useFileStore = create<FileState & FileActions>((set, get) => ({
     set({ activeFileId: fileId });
   },
 
-  openFile: (fileId) => {
-    const fileData = MOCK_FILES[fileId];
-    if (!fileData) {
-      console.error(`Cannot open file: ${fileId} not found in MOCK_FILES.`);
+  hydrateFromRoomFiles: (files) => {
+    if (!files.length) {
+      set({
+        openFiles: [],
+        activeFileId: null,
+        fileContents: {},
+        persistenceIds: {},
+        sizeBytes: {},
+        collaborationEnabled: {},
+      });
       return;
     }
 
-    const state = get();
-    const fileAlreadyOpen = state.openFiles.some((f) => f.id === fileId);
-
-    if (!fileAlreadyOpen) {
-      const newOpenFile: OpenFile = {
-        id: fileId,
-        name: fileData.name,
-        language: fileData.language as EditorLanguageKey,
+    const allFiles: OpenFile[] = files.map((file) => {
+      const documentId = file.id || file.path;
+      const displayName = (file.path || documentId).includes("/")
+        ? (file.path || documentId).slice(
+            (file.path || documentId).lastIndexOf("/") + 1
+          )
+        : file.path || documentId;
+      return {
+        id: documentId,
+        name: displayName,
+        language: (file.language || "plaintext") as EditorLanguageKey,
       };
+    });
+    // Imported repositories can contain hundreds of files. Start with one
+    // useful tab and let the explorer open the rest on demand.
+    const preferredIndex = files.findIndex((file) => {
+      const path = (file.path || file.id).toLowerCase();
+      return path === "readme.md";
+    });
+    const fallbackIndex = files.findIndex((file) => {
+      const path = (file.path || file.id).toLowerCase();
+      return path === "index.html";
+    });
+    const initialIndex =
+      preferredIndex >= 0 ? preferredIndex : fallbackIndex >= 0 ? fallbackIndex : 0;
+    const openFiles = allFiles[initialIndex] ? [allFiles[initialIndex]] : [];
 
-      const newStateUpdate: Partial<FileState> = {
-        openFiles: [...state.openFiles, newOpenFile],
-        activeFileId: fileId,
-      };
-
-      // Initialize content for files that don't have content yet
-      if (state.fileContents[fileId] === undefined) {
-        newStateUpdate.fileContents = {
-          ...state.fileContents,
-          [fileId]: fileData.content,
-        };
+    const fileContents: { [id: string]: string | null } = {};
+    const persistenceIds: { [documentId: string]: string } = {};
+    const sizeBytes: { [documentId: string]: number } = {};
+    const collaborationEnabled: { [documentId: string]: boolean } = {};
+    files.forEach((file) => {
+      const documentId = file.id || file.path;
+      // Preserve null so large files stay lazy-loaded
+      fileContents[documentId] =
+        file.content === undefined ? null : file.content;
+      if (file.persistenceId) {
+        persistenceIds[documentId] = file.persistenceId;
       }
+      sizeBytes[documentId] =
+        typeof file.sizeBytes === "number" ? file.sizeBytes : 0;
+      collaborationEnabled[documentId] = file.collaborationEnabled !== false;
+    });
 
-      set(newStateUpdate);
-    } else {
-      // File is already open, just switch to it
+    set({
+      openFiles,
+      activeFileId: openFiles[0]?.id ?? null,
+      fileContents,
+      persistenceIds,
+      sizeBytes,
+      collaborationEnabled,
+    });
+  },
+
+  getPersistenceId: (documentId) => {
+    return get().persistenceIds[documentId] ?? null;
+  },
+
+  getSizeBytes: (documentId) => {
+    return get().sizeBytes[documentId] ?? 0;
+  },
+
+  isCollaborationEnabled: (documentId) => {
+    return get().collaborationEnabled[documentId] !== false;
+  },
+
+  isContentLoaded: (documentId) => {
+    return get().fileContents[documentId] != null;
+  },
+
+  resetToDefaults: () => {
+    set({
+      openFiles: initialOpenFilesData,
+      activeFileId: initialActiveFileId,
+      fileContents: { ...initialFileContents },
+      persistenceIds: {},
+      sizeBytes: {},
+      collaborationEnabled: {},
+    });
+  },
+
+  openFile: (fileId) => {
+    const state = get();
+    const alreadyOpen = state.openFiles.find((f) => f.id === fileId);
+    if (alreadyOpen) {
       set({ activeFileId: fileId });
+      return;
     }
+
+    const fileData = MOCK_FILES[fileId];
+    if (!fileData) {
+      // Room files may already be in contents but not open
+      if (state.fileContents[fileId] !== undefined) {
+        const name = fileId.includes("/")
+          ? fileId.slice(fileId.lastIndexOf("/") + 1)
+          : fileId;
+        set({
+          openFiles: [
+            ...state.openFiles,
+            {
+              id: fileId,
+              name,
+              language: "plaintext" as EditorLanguageKey,
+            },
+          ],
+          activeFileId: fileId,
+        });
+        return;
+      }
+      console.error(`Cannot open file: ${fileId} not found.`);
+      return;
+    }
+
+    const newOpenFile: OpenFile = {
+      id: fileId,
+      name: fileData.name,
+      language: fileData.language as EditorLanguageKey,
+    };
+
+    const newStateUpdate: Partial<FileState> = {
+      openFiles: [...state.openFiles, newOpenFile],
+      activeFileId: fileId,
+    };
+
+    if (state.fileContents[fileId] === undefined) {
+      newStateUpdate.fileContents = {
+        ...state.fileContents,
+        [fileId]: fileData.content,
+      };
+    }
+
+    set(newStateUpdate);
   },
 
   closeFile: (fileIdToClose) => {

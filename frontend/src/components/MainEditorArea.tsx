@@ -121,26 +121,32 @@ const MainEditorArea = ({
         />
 
         {/* Breadcrumbs Area */}
-        <div className="h-6 flex-shrink-0 bg-neutral-900 flex items-center px-2 text-sm text-stone-400 overflow-hidden whitespace-nowrap">
+        <div className="h-7 flex-shrink-0 bg-ink-900 flex items-center px-3 text-sm text-mist-400 overflow-hidden whitespace-nowrap border-b border-ink-600/60">
           {activeFile ? (
             <React.Fragment>
-              {/* File Icon and Name */}
               <ActiveIconComponent
-                size={16}
-                className={`mr-1 flex-shrink-0 ${activeIconColor}`}
+                size={14}
+                className={`mr-1.5 flex-shrink-0 ${activeIconColor}`}
               />
-              <span className="text-stone-400">{activeFile.name}</span>
+              <span className="font-mono text-xs text-mist-400">
+                {activeFile.name}
+              </span>
             </React.Fragment>
           ) : (
-            <span>{/* No file selected */}</span>
+            <span />
           )}
         </div>
 
         {/* Code Editor Area */}
-        <div className="flex-1 overflow-auto font-mono text-sm relative bg-neutral-900 min-h-0">
+        <div className="flex-1 overflow-auto font-mono text-sm relative bg-ink-900 min-h-0">
           {joinState === "prompting" ? (
-            <div className="flex items-center justify-center h-full text-stone-500">
-              Enter your details in the sidebar to join the session...
+            <div className="flex flex-col items-center justify-center h-full gap-2 px-6 text-center">
+              <p className="font-display text-lg font-semibold text-mist-100">
+                Almost there
+              </p>
+              <p className="text-sm text-mist-500 max-w-sm">
+                Enter your details in the sidebar to join this live session.
+              </p>
             </div>
           ) : activeFileId && openFiles.find((f) => f.id === activeFileId) ? (
             <CodeEditor
@@ -160,18 +166,23 @@ const MainEditorArea = ({
               isSessionActive={isSessionActive}
             />
           ) : (
-            <div className="flex items-center justify-center h-full text-stone-500">
-              Select a file to start editing.
+            <div className="flex flex-col items-center justify-center h-full gap-2 px-6 text-center">
+              <p className="font-display text-lg font-semibold text-mist-100">
+                Open a file
+              </p>
+              <p className="text-sm text-mist-500">
+                Select a file from the explorer to start editing.
+              </p>
             </div>
           )}
         </div>
 
         {/* Terminal Resizer */}
         <div
-          className={`w-full bg-stone-700 flex-shrink-0 ${
+          className={`w-full bg-ink-600 flex-shrink-0 ${
             isTerminalCollapsed
-              ? "cursor-pointer hover:bg-stone-500"
-              : "cursor-row-resize hover:bg-stone-600 active:bg-stone-500"
+              ? "cursor-pointer hover:bg-signal/40"
+              : "cursor-row-resize hover:bg-signal/50 active:bg-signal/60"
           }`}
           style={{ height: `${TERMINAL_HANDLE_HEIGHT}px` }}
           onMouseDown={handleTerminalPanelMouseDown}
@@ -179,13 +190,15 @@ const MainEditorArea = ({
 
         {/* Terminal Panel */}
         <div
-          className={`bg-neutral-900 bg-opacity-90 flex flex-col border-t border-stone-600 flex-shrink-0 ${
+          className={`bg-ink-900/95 flex flex-col border-t border-ink-500 flex-shrink-0 ${
             isTerminalCollapsed ? "hidden" : "flex"
           }`}
           style={{ height: `${terminalPanelHeight}px` }}
         >
-          <div className="flex bg-stone-800 py-1 text-sm flex-shrink-0">
-            <div className="px-4 py-1 text-stone-400 text-xs">TERMINAL</div>
+          <div className="flex bg-ink-850 py-1 text-sm flex-shrink-0 border-b border-ink-600/60">
+            <div className="px-4 py-1 font-mono text-[10px] uppercase tracking-[0.16em] text-mist-400">
+              Terminal
+            </div>
           </div>
           <div className="flex-1 px-4 pt-2 font-mono text-sm overflow-hidden min-h-0">
             <TerminalComponent ref={terminalRef} height={terminalPanelHeight} />
@@ -212,8 +225,8 @@ const MainEditorArea = ({
       {/* WebView Panel */}
       {webViewPanelWidth > 0 && (
         <div
-          className={`flex-shrink-0 overflow-hidden bg-stone-800 relative 
-                     before:content-[''] before:absolute before:left-0 before:bottom-0 before:w-px before:bg-stone-600
+          className={`flex-shrink-0 overflow-hidden bg-ink-800 relative 
+                     before:content-[''] before:absolute before:left-0 before:bottom-0 before:w-px before:bg-ink-500
                      ${
                        tabsHaveOverflow ? "before:top-0" : "before:top-[33px]"
                      }`}

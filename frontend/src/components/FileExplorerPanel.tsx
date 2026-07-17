@@ -8,7 +8,6 @@ import {
 import { EditorLanguageKey } from "../types/editor";
 import { MockFile } from "../constants/mockFiles";
 
-// Props for FileExplorerPanel - initially minimal, might adjust
 interface FileExplorerPanelProps {
   isSessionActive: boolean;
   handleOpenFile: (fileId: string) => void;
@@ -29,12 +28,11 @@ const FileExplorerPanel = ({
 
   return (
     <div className="flex-1 flex flex-col">
-      <div className="pl-4 py-2 text-xs text-stone-400 sticky top-0 bg-stone-800 bg-opacity-95 z-10 flex-shrink-0">
-        EXPLORER
-      </div>
+      <div className="ds-panel-title">Explorer</div>
       <div className="w-full h-full overflow-y-auto flex-grow">
         <button
-          className="flex items-center text-xs py-1 cursor-pointer w-full hover:bg-stone-700 pl-1"
+          type="button"
+          className="flex items-center text-xs py-1.5 cursor-pointer w-full hover:bg-ink-600 pl-1"
           onClick={toggleProjectFolder}
         >
           <div
@@ -44,23 +42,23 @@ const FileExplorerPanel = ({
             {isProjectExpanded ? (
               <VscChevronDown
                 size={16}
-                className="flex-shrink-0 text-stone-500"
+                className="flex-shrink-0 text-mist-500"
               />
             ) : (
               <VscChevronRight
                 size={16}
-                className="flex-shrink-0 text-stone-500"
+                className="flex-shrink-0 text-mist-500"
               />
             )}
           </div>
-          <span className="font-medium text-stone-500 truncate">
-            MY CODECAFE PROJECT
+          <span className="font-medium text-mist-300 truncate tracking-wide">
+            DevSync Workspace
           </span>
         </button>
 
         {isProjectExpanded && (
           <div className="relative">
-            <div className="absolute top-0 bottom-0 left-[12px] w-px bg-stone-600/50 z-0"></div>
+            <div className="absolute top-0 bottom-0 left-[12px] w-px bg-ink-500/70 z-0" />
 
             {Object.entries(mockFiles).map(([id, file]) => {
               const IconComponent =
@@ -71,21 +69,21 @@ const FileExplorerPanel = ({
               return (
                 <div
                   key={id}
-                  className={`relative flex items-center text-sm py-1 cursor-pointer w-full pl-4 z-10 ${
+                  className={`relative flex items-center text-sm py-1.5 cursor-pointer w-full pl-4 z-10 transition-colors ${
                     activeFileId === id
-                      ? "bg-stone-600/50 shadow-[inset_0_1px_0_#78716c,inset_0_-1px_0_#78716c] hover:bg-stone-600/50"
-                      : "hover:bg-stone-700/50"
+                      ? "bg-signal/10 shadow-[inset_2px_0_0_#2ee6a6] hover:bg-signal/15"
+                      : "hover:bg-ink-600/70"
                   }`}
                   onClick={() => handleOpenFile(id)}
                   title={file.name}
                 >
                   <IconComponent
                     size={18}
-                    className={`mr-1 flex-shrink-0 ${iconColor}`}
+                    className={`mr-1.5 flex-shrink-0 ${iconColor}`}
                   />
                   <span
                     className={`w-full truncate ${
-                      activeFileId === id ? "text-stone-100" : "text-stone-400"
+                      activeFileId === id ? "text-mist-100" : "text-mist-400"
                     }`}
                   >
                     {file.name}

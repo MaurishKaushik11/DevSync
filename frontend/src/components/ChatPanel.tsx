@@ -12,7 +12,6 @@ const ChatPanel = ({
   const messagesEndRef = React.useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Scroll to bottom when messages change
   useEffect(() => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
@@ -22,7 +21,6 @@ const ChatPanel = ({
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInputMessage(e.target.value);
 
-    // Only adjust height if content exceeds one line
     const textarea = e.target;
     if (textarea.scrollHeight > 36 && textarea.scrollHeight <= 150) {
       textarea.style.height = `${textarea.scrollHeight}px`;
@@ -36,13 +34,9 @@ const ChatPanel = ({
 
     if (!inputMessage.trim() || !isSessionActive) return;
 
-    // Send the message
     onSendMessage(inputMessage.trim());
-
-    // Clear input
     setInputMessage("");
 
-    // Reset textarea height
     if (textareaRef.current) {
       textareaRef.current.style.height = "36px";
     }
@@ -50,12 +44,9 @@ const ChatPanel = ({
 
   return (
     <div className="flex flex-col h-full">
-      <div className="pl-4 py-2 text-xs text-stone-400 sticky top-0 bg-stone-800 z-10">
-        CHAT
-      </div>
+      <div className="ds-panel-title">Chat</div>
 
-      {/* Messages Container */}
-      <div className="flex-1 overflow-y-auto divide-stone-600 overscroll-y-none">
+      <div className="flex-1 overflow-y-auto overscroll-y-none">
         {messages.length > 0 ? (
           <>
             {messages.map((msg, index) => (
@@ -71,16 +62,15 @@ const ChatPanel = ({
             <div ref={messagesEndRef} />
           </>
         ) : (
-          <div className="text-center py-10 text-stone-500 text-sm">
+          <div className="text-center py-10 text-mist-500 text-sm px-4">
             {isSessionActive
-              ? "No messages yet."
+              ? "No messages yet — say hello."
               : "Join a session to start chatting."}
           </div>
         )}
       </div>
 
-      {/* Message Input */}
-      <div className="p-4 flex-shrink-0">
+      <div className="p-3 flex-shrink-0 border-t border-ink-600">
         <form onSubmit={handleSubmit} className="relative flex items-center">
           <textarea
             ref={textareaRef}
@@ -91,7 +81,7 @@ const ChatPanel = ({
             }
             disabled={!isSessionActive}
             style={{ height: "36px" }}
-            className={`w-full bg-stone-800 border border-stone-600 text-stone-200 placeholder-stone-500 px-3 py-2 text-sm leading-4 focus:outline-none focus:border-stone-500 pr-10 resize-none overflow-y-auto box-border rounded-sm ${
+            className={`w-full ds-input pr-10 resize-none overflow-y-auto box-border leading-4 ${
               !isSessionActive ? "opacity-50 cursor-not-allowed" : ""
             }`}
             rows={1}
@@ -107,8 +97,8 @@ const ChatPanel = ({
             disabled={!inputMessage.trim() || !isSessionActive}
             className={`absolute right-0 h-8 flex items-center justify-center px-3 ${
               inputMessage.trim() && isSessionActive
-                ? "text-stone-300 hover:text-stone-100"
-                : "text-stone-600 cursor-not-allowed"
+                ? "text-signal hover:text-mist-100"
+                : "text-ink-400 cursor-not-allowed"
             }`}
           >
             <IoSend />

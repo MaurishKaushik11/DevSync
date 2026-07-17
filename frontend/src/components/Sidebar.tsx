@@ -110,94 +110,80 @@ const Sidebar = ({
     }
   };
 
+  const railBtn = (active: boolean) =>
+    `ds-icon-rail-btn ${active ? "ds-icon-rail-btn-active" : ""}`;
+
   return (
     <div
       ref={sidebarContainerRef}
       className="flex flex-shrink-0 h-full relative"
     >
-      {/* Icon Bar */}
       <div
-        className="bg-stone-800 bg-opacity-60 flex flex-col justify-between py-2 border-r border-stone-600 flex-shrink-0 z-10"
+        className="bg-ink-850/90 flex flex-col justify-between py-2 border-r border-ink-500 flex-shrink-0 z-10"
         style={{ width: `${ICON_BAR_WIDTH}px` }}
       >
-        {/* Top Icons */}
-        <div className="flex flex-col items-center space-y-3">
+        <div className="flex flex-col items-center">
           <button
-            className={`w-full flex justify-center py-1 ${
-              activeIcon === "files"
-                ? "text-stone-100"
-                : "text-stone-500 hover:text-stone-200"
-            }`}
+            type="button"
+            className={railBtn(activeIcon === "files")}
             onClick={() => handleGenericIconClick("files")}
+            title="Explorer"
           >
-            <VscFiles size={24} />
+            <VscFiles size={22} />
           </button>
           <button
-            className={`w-full flex justify-center py-1 ${
-              activeIcon === "search"
-                ? "text-stone-100"
-                : "text-stone-500 hover:text-stone-200"
-            }`}
+            type="button"
+            className={railBtn(activeIcon === "search")}
             onClick={() => handleGenericIconClick("search")}
+            title="Search"
           >
-            <VscSearch size={24} />
+            <VscSearch size={22} />
           </button>
           <button
-            className={`w-full flex justify-center py-1 ${
-              activeIcon === "share"
-                ? "text-stone-100"
-                : "text-stone-500 hover:text-stone-200"
-            }`}
+            type="button"
+            className={railBtn(activeIcon === "share")}
             onClick={handleShareIconClick}
+            title="Session"
           >
-            <GrShareOption size={26} />
+            <GrShareOption size={24} />
           </button>
           <button
-            className={`w-full flex justify-center py-1 ${
-              activeIcon === "chat"
-                ? "text-stone-100"
-                : "text-stone-500 hover:text-stone-200"
-            }`}
+            type="button"
+            className={railBtn(activeIcon === "chat")}
             onClick={() => handleGenericIconClick("chat")}
+            title="Chat"
           >
-            <GrChatOption size={24} />
+            <GrChatOption size={22} />
           </button>
         </div>
-        {/* Bottom Icons */}
-        <div className="flex flex-col items-center space-y-3">
+        <div className="flex flex-col items-center">
           <button
-            className={`w-full flex justify-center py-1 ${
-              activeIcon === "account"
-                ? "text-stone-100"
-                : "text-stone-500 hover:text-stone-200"
-            }`}
+            type="button"
+            className={railBtn(activeIcon === "account")}
             onClick={() => handleGenericIconClick("account")}
+            title="Account"
           >
-            <VscAccount size={24} />
+            <VscAccount size={22} />
           </button>
           <button
-            className={`w-full flex justify-center py-1 ${
-              activeIcon === "settings"
-                ? "text-stone-100"
-                : "text-stone-500 hover:text-stone-200"
-            }`}
+            type="button"
+            className={railBtn(activeIcon === "settings")}
             onClick={() => handleGenericIconClick("settings")}
+            title="Settings"
           >
-            <VscSettingsGear size={24} />
+            <VscSettingsGear size={22} />
           </button>
         </div>
       </div>
 
-      {/* Main Content Panel Area (Explorer, Search, Chat etc.) */}
       <div
         ref={explorerPanelRef}
-        className={`bg-stone-800 bg-opacity-60 overflow-hidden flex flex-col h-full border-r border-stone-600 flex-shrink-0 ${
+        className={`bg-ink-800/80 overflow-hidden flex flex-col h-full border-r border-ink-500 flex-shrink-0 ${
           !isExplorerCollapsed ? "visible" : "invisible w-0"
         }`}
         style={{ width: `${explorerPanelSize}px` }}
       >
         <>
-          {/* File Explorer Panel */}
           <div
             className={`flex-1 flex flex-col overflow-hidden ${
               (activeIcon === "files" || activeIcon === null) &&
@@ -214,7 +200,6 @@ const Sidebar = ({
             />
           </div>
 
-          {/* Chat Panel */}
           <div
             className={`flex-1 overflow-hidden ${
               activeIcon === "chat" ? "" : "hidden"
@@ -231,7 +216,6 @@ const Sidebar = ({
             />
           </div>
 
-          {/* Search Panel */}
           <SearchPanel
             activeIcon={activeIcon}
             onExecuteSearch={onSearchChange}
@@ -243,7 +227,6 @@ const Sidebar = ({
             onReplaceChange={onReplaceChange}
           />
 
-          {/* Share Panel: Shows JoinSessionPanel or SessionParticipantsPanel */}
           {activeIcon === "share" && (
             <>
               {joinState === "prompting" ? (
@@ -267,44 +250,40 @@ const Sidebar = ({
                   localUser={{ name: localUserName, color: localUserColor }}
                 />
               ) : (
-                <div className="flex flex-col h-full bg-stone-800 bg-opacity-60">
-                  <div className="pl-4 py-2 text-xs text-stone-400 sticky top-0 bg-stone-800 bg-opacity-60 z-10 flex-shrink-0">
-                    PARTICIPANTS
-                  </div>
-                  <div className="flex-1 overflow-y-auto">
-                    <div className="text-center py-10 text-stone-500 text-sm">
-                      Join or start a session to view participants.
-                    </div>
+                <div className="flex flex-col h-full">
+                  <div className="ds-panel-title">Participants</div>
+                  <div className="flex-1 overflow-y-auto px-4 py-8">
+                    <p className="text-center text-mist-500 text-sm leading-relaxed">
+                      Start or join a session to see who&apos;s in the
+                      workspace.
+                    </p>
                   </div>
                 </div>
               )}
             </>
           )}
 
-          {/* Account Panel Placeholder */}
           <div
-            className={`p-4 text-stone-400 ${
+            className={`p-4 text-mist-500 text-sm ${
               activeIcon === "account" ? "" : "hidden"
             }`}
           >
-            Account Panel (Not Implemented)
+            Account settings coming soon.
           </div>
 
-          {/* Settings Panel Placeholder */}
           <div
-            className={`p-4 text-stone-400 ${
+            className={`p-4 text-mist-500 text-sm ${
               activeIcon === "settings" ? "" : "hidden"
             }`}
           >
-            Settings Panel (Not Implemented)
+            Workspace settings coming soon.
           </div>
         </>
       </div>
 
-      {/* Resizer Handle */}
       {!isExplorerCollapsed && (
         <div
-          className="absolute top-0 h-full cursor-col-resize bg-transparent z-20"
+          className="absolute top-0 h-full cursor-col-resize bg-transparent z-20 hover:bg-signal/20"
           style={{
             width: `${EXPLORER_HANDLE_WIDTH}px`,
             left: `${

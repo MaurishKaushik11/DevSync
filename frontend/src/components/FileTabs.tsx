@@ -244,7 +244,7 @@ const FileTabs = ({
     >
       <div
         ref={tabContainerRef}
-        className="flex bg-stone-800 flex-shrink-0 overflow-x-auto relative"
+        className="flex bg-ink-850 flex-shrink-0 overflow-x-auto relative"
       >
         <SortableContext
           items={openFiles.map((f) => f.id)}
@@ -282,18 +282,16 @@ const FileTabs = ({
                   languageColorMap[draggedFile.language] || defaultIconColor;
                 return (
                   <div
-                    className={`pl-2 pr-4 py-1 border border-stone-500 flex items-center flex-shrink-0 relative shadow-lg bg-neutral-900`}
+                    className="pl-2.5 pr-4 py-1.5 border border-signal/30 flex items-center flex-shrink-0 relative shadow-panel bg-ink-700 rounded-t-md"
                   >
                     <IconComponent
                       size={16}
                       className={`mr-1.5 flex-shrink-0 ${iconColor}`}
                     />
-                    <span
-                      className={`text-sm -mt-0.5 select-none cursor-default text-stone-200`}
-                    >
+                    <span className="text-sm select-none cursor-default text-mist-100">
                       {draggedFile.name}
                     </span>
-                    <span className="ml-2 text-stone-400 p-0.5 -mt-0.5 opacity-50">
+                    <span className="ml-2 text-mist-500 p-0.5 opacity-50">
                       ×
                     </span>
                   </div>
@@ -301,7 +299,7 @@ const FileTabs = ({
               })()
             : null}
         </DragOverlay>
-        <div className="absolute bottom-0 left-0 right-0 h-px bg-stone-600 z-0"></div>
+        <div className="absolute bottom-0 left-0 right-0 h-px bg-ink-500 z-0" />
       </div>
     </DndContext>
   );

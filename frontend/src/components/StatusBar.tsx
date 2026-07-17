@@ -3,32 +3,31 @@ import { ConnectionStatus, StatusBarProps } from "../types/props";
 const StatusBar = ({
   connectionStatus,
   language = "plaintext",
-  line = 1, // Default line
-  column = 1, // Default column
+  line = 1,
+  column = 1,
 }: StatusBarProps) => {
-  // function to determine status indicator style
   const getStatusIndicator = (status: ConnectionStatus) => {
     switch (status) {
       case "connected":
         return (
           <span
-            className="w-2 h-2 bg-green-500 rounded-full inline-block mr-1.5"
+            className="w-1.5 h-1.5 bg-signal rounded-full inline-block mr-1.5 shadow-glow"
             title="Connected"
-          ></span>
+          />
         );
       case "disconnected":
         return (
           <span
-            className="w-2 h-2 bg-red-500 rounded-full inline-block mr-1.5"
+            className="w-1.5 h-1.5 bg-red-400 rounded-full inline-block mr-1.5"
             title="Disconnected"
-          ></span>
+          />
         );
       case "connecting":
         return (
           <span
-            className="w-2 h-2 bg-yellow-500 rounded-full inline-block mr-1.5 animate-pulse"
+            className="w-1.5 h-1.5 bg-amber-400 rounded-full inline-block mr-1.5 animate-pulse-soft"
             title="Connecting..."
-          ></span>
+          />
         );
       default:
         return null;
@@ -36,35 +35,31 @@ const StatusBar = ({
   };
 
   return (
-    <div className="bg-stone-800 bg-opacity-80 text-stone-500 flex justify-between items-stretch h-6 text-xs border-t border-stone-600 flex-shrink-0">
-      {/* Left Group - Remove padding/spacing */}
+    <div className="bg-ink-850/95 text-mist-500 flex justify-between items-stretch h-7 text-[11px] font-mono border-t border-ink-500 flex-shrink-0">
       <div className="flex items-stretch">
-        {/* Connection Status Indicator - Apply item styling */}
         {connectionStatus && (
-          <div className="flex items-center px-3 cursor-default select-none hover:bg-stone-700 hover:text-stone-200">
+          <div className="flex items-center px-3 cursor-default select-none hover:bg-ink-600 hover:text-mist-200 transition-colors">
             {getStatusIndicator(connectionStatus)}
             {connectionStatus.charAt(0).toUpperCase() +
               connectionStatus.slice(1)}
           </div>
         )}
-        {/* Language - Apply item styling */}
-        <div className="flex items-center px-3 cursor-default select-none hover:bg-stone-700 hover:text-stone-200">
+        <div className="flex items-center px-3 cursor-default select-none hover:bg-ink-600 hover:text-mist-200 transition-colors">
           {language}
         </div>
-        {/* Encoding - Apply item styling */}
-        <div className="flex items-center px-3 cursor-default select-none hover:bg-stone-700 hover:text-stone-200">
+        <div className="flex items-center px-3 cursor-default select-none hover:bg-ink-600 hover:text-mist-200 transition-colors">
           UTF-8
         </div>
       </div>
-      {/* Right Group - Remove padding/spacing */}
       <div className="flex items-stretch">
-        {/* Line/Col - Apply item styling */}
-        <div className="flex items-center px-3 cursor-default select-none hover:bg-stone-700 hover:text-stone-200">
+        <div className="flex items-center px-3 cursor-default select-none hover:bg-ink-600 hover:text-mist-200 transition-colors">
           Ln {line}, Col {column}
         </div>
-        {/* Spaces - Apply item styling */}
-        <div className="flex items-center px-3 cursor-default select-none hover:bg-stone-700 hover:text-stone-200">
-          Spaces: 2 {/* TODO: Make spaces dynamic? */}
+        <div className="flex items-center px-3 cursor-default select-none hover:bg-ink-600 hover:text-mist-200 transition-colors">
+          Spaces: 2
+        </div>
+        <div className="flex items-center px-3 cursor-default select-none text-signal/80 hover:bg-signal/10 hover:text-signal transition-colors">
+          DevSync
         </div>
       </div>
     </div>

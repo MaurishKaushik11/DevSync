@@ -41,4 +41,4 @@ export const languageColorMap: { [key in EditorLanguageKey]?: string } = {
   // will add more colors as more more languages are added
 };
 
-export const defaultIconColor = "text-stone-400";
+export const defaultIconColor = "text-mist-400";

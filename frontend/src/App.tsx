@@ -710,7 +710,7 @@ const App = () => {
 
   // JSX
   return (
-    <div className="flex flex-col h-screen bg-gradient-to-b from-stone-800 to-stone-600 text-stone-300 overflow-hidden">
+    <div className="flex flex-col h-screen bg-workspace text-mist-200 overflow-hidden font-sans">
       {/* CSS rule now conditional based on parent class */}
       <style>
         {`

@@ -78,8 +78,8 @@ const SearchPanel = ({
       }`}
     >
       {/* Sticky Header */}
-      <div className="pl-4 py-2 text-xs text-stone-400 sticky top-0 bg-stone-800 bg-opacity-95 z-10">
-        SEARCH
+      <div className="ds-panel-title">
+        Search
       </div>
       {/* Input Container */}
       <div className="pl-4 py-2 flex flex-col space-y-1 pr-2">
@@ -90,7 +90,7 @@ const SearchPanel = ({
             placeholder="Search"
             value={localSearchTerm}
             onChange={handleSearchInputChange}
-            className="w-full bg-stone-900/80 border border-stone-600 text-stone-200 placeholder-stone-500 pl-3 pr-24 py-1 text-sm focus:outline-none focus:border-stone-500 transition-colors h-7 rounded-sm"
+            className="w-full bg-ink-900 border border-ink-500 text-mist-100 placeholder-mist-500 pl-3 pr-24 py-1 text-sm focus:outline-none focus:border-signal/50 transition-colors h-7 rounded-md"
           />
           <div className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center space-x-0.5">
             <button
@@ -98,8 +98,8 @@ const SearchPanel = ({
               onClick={() => handleToggleOptionClick("matchCase")}
               className={`p-0.5 rounded ${
                 searchOptions.matchCase
-                  ? "bg-stone-500/40 text-stone-100"
-                  : "text-stone-400 hover:bg-stone-700/50"
+                  ? "bg-signal/20 text-signal"
+                  : "text-mist-400 hover:bg-ink-600"
               }`}
             >
               <VscCaseSensitive size={14} />
@@ -109,8 +109,8 @@ const SearchPanel = ({
               onClick={() => handleToggleOptionClick("wholeWord")}
               className={`p-0.5 rounded ${
                 searchOptions.wholeWord
-                  ? "bg-stone-500/40 text-stone-100"
-                  : "text-stone-400 hover:bg-stone-700/50"
+                  ? "bg-signal/20 text-signal"
+                  : "text-mist-400 hover:bg-ink-600"
               }`}
             >
               <VscWholeWord size={14} />
@@ -120,8 +120,8 @@ const SearchPanel = ({
               onClick={() => handleToggleOptionClick("isRegex")}
               className={`p-0.5 rounded ${
                 searchOptions.isRegex
-                  ? "bg-stone-500/40 text-stone-100"
-                  : "text-stone-400 hover:bg-stone-700/50"
+                  ? "bg-signal/20 text-signal"
+                  : "text-mist-400 hover:bg-ink-600"
               }`}
             >
               <VscRegex size={14} />
@@ -135,7 +135,7 @@ const SearchPanel = ({
               placeholder="Replace"
               value={replaceValue}
               onChange={handleReplaceInputChange}
-              className="w-full bg-stone-900/80 border border-stone-600 text-stone-200 placeholder-stone-500 pl-3 pr-8 py-1 text-sm focus:outline-none focus:border-stone-500 transition-colors h-7 rounded-sm"
+              className="w-full bg-ink-900 border border-ink-500 text-mist-100 placeholder-mist-500 pl-3 pr-8 py-1 text-sm focus:outline-none focus:border-signal/50 transition-colors h-7 rounded-md"
             />
             {/* Preserve Case Button */}
             <div className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center">
@@ -144,8 +144,8 @@ const SearchPanel = ({
                 onClick={() => handleToggleOptionClick("preserveCase")}
                 className={`p-0.5 rounded ${
                   searchOptions.preserveCase
-                    ? "bg-stone-500/40 text-stone-100"
-                    : "text-stone-400 hover:bg-stone-700/50"
+                    ? "bg-signal/20 text-signal"
+                    : "text-mist-400 hover:bg-ink-600"
                 }`}
               >
                 <VscPreserveCase size={14} />
@@ -159,13 +159,13 @@ const SearchPanel = ({
             disabled={
               !localSearchTerm || !matchInfo || matchInfo.totalMatches === 0
             }
-            className="p-1 rounded text-stone-400 hover:bg-stone-700/50 disabled:text-stone-600 disabled:cursor-not-allowed flex-shrink-0 h-7 w-7 flex items-center justify-center"
+            className="p-1 rounded text-mist-400 hover:bg-ink-600 disabled:text-ink-400 disabled:cursor-not-allowed flex-shrink-0 h-7 w-7 flex items-center justify-center"
           >
             <VscReplaceAll size={16} />
           </button>
         </div>
 
-        <div className="text-xs text-stone-400 text-left pl-1 h-4 pt-1">
+        <div className="text-xs text-mist-500 text-left pl-1 h-4 pt-1 font-mono">
           {formatMatchCount()}
         </div>
       </div>

@@ -36,14 +36,14 @@ export function SortableTab({
       onClick={() => handleSwitchTab(file.id)}
       {...listeners}
       className={clsx(
-        "group pl-2 pr-4 py-1 border-r border-stone-600 flex items-center flex-shrink-0 relative transition-colors duration-150 ease-out",
-        // Restore the ::before/::after classes for the indicator lines
-        'before:content-[""] before:absolute before:inset-y-0 before:left-0 before:w-[2px] before:bg-white before:transition-opacity before:duration-150 before:z-10 before:opacity-[var(--before-opacity,0)]',
-        'after:content-[""] after:absolute after:inset-y-0 after:right-0 after:w-[2px] after:bg-white after:transition-opacity after:duration-150 after:z-10 after:opacity-[var(--after-opacity,0)]',
+        "group pl-2.5 pr-3 py-1.5 border-r border-ink-500 flex items-center flex-shrink-0 relative transition-colors duration-150 ease-out",
+        'before:content-[""] before:absolute before:inset-y-0 before:left-0 before:w-[2px] before:bg-signal before:transition-opacity before:duration-150 before:z-10 before:opacity-[var(--before-opacity,0)]',
+        'after:content-[""] after:absolute after:inset-y-0 after:right-0 after:w-[2px] after:bg-signal after:transition-opacity after:duration-150 after:z-10 after:opacity-[var(--after-opacity,0)]',
         {
-          "bg-neutral-900 z-10": activeFileId === file.id,
-          "bg-stone-700 hover:bg-stone-600 z-0": activeFileId !== file.id,
-          "opacity-50": isDragging, // Keep dimming the original tab
+          "bg-ink-900 z-10 shadow-[inset_0_-1px_0_0_#2ee6a6]":
+            activeFileId === file.id,
+          "bg-ink-700/60 hover:bg-ink-600 z-0": activeFileId !== file.id,
+          "opacity-50": isDragging,
         }
       )}
     >
@@ -54,14 +54,14 @@ export function SortableTab({
       <div className="flex items-center overflow-hidden">
         <span
           title={file.name}
-          className={`text-sm -mt-0.5 select-none truncate ${
-            activeFileId === file.id ? "text-stone-200" : "text-stone-400"
+          className={`text-sm select-none truncate ${
+            activeFileId === file.id ? "text-mist-100" : "text-mist-400"
           }`}
         >
           {file.name}
         </span>
         <button
-          className={`ml-1.5 text-stone-500 hover:text-stone-300 rounded-sm p-0.5 -mt-0.5 flex-shrink-0 z-20 opacity-60 hover:opacity-100 focus:opacity-100 ${
+          className={`ml-1.5 text-mist-500 hover:text-mist-200 rounded-sm p-0.5 flex-shrink-0 z-20 hover:opacity-100 focus:opacity-100 ${
             activeFileId === file.id
               ? "opacity-60"
               : "opacity-0 group-hover:opacity-60 focus-within:opacity-60"

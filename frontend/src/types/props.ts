@@ -76,6 +76,8 @@ export interface WebViewPanelProps {
   htmlContent: string;
   cssContent: string;
   jsContent: string;
+  previewUrl?: string | null;
+  runtimeStatus?: "idle" | "starting" | "ready" | "error";
   onClose?: () => void;
 }
 

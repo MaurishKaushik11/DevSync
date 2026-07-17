@@ -28,6 +28,12 @@ public final class RepositoryImportRules {
             "coverage",
             ".next"
     );
+    private static final Set<String> SENSITIVE_FILE_NAMES = Set.of(
+            "id_rsa",
+            "id_ed25519",
+            "credentials.json",
+            "service-account.json"
+    );
 
     private RepositoryImportRules() {
     }
@@ -79,7 +85,22 @@ public final class RepositoryImportRules {
                 return true;
             }
         }
-        return false;
+        return isSensitiveFilePath(relativePath);
+    }
+
+    public static boolean isSensitiveFilePath(String relativePath) {
+        if (relativePath == null || relativePath.isBlank()) {
+            return true;
+        }
+        String[] parts = relativePath.replace('\\', '/').split("/");
+        String fileName = parts[parts.length - 1].toLowerCase(Locale.ROOT);
+        return fileName.equals(".env")
+                || fileName.startsWith(".env.")
+                || SENSITIVE_FILE_NAMES.contains(fileName)
+                || fileName.endsWith(".pem")
+                || fileName.endsWith(".key")
+                || fileName.endsWith(".p12")
+                || fileName.endsWith(".pfx");
     }
 
     public static boolean isLikelyBinary(byte[] bytes) {

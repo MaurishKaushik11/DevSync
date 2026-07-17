@@ -40,6 +40,7 @@ export interface OpenFile {
 
 export interface TerminalHandle {
   writeToTerminal: (output: string) => void;
+  writeRaw: (output: string) => void;
   clear: () => void;
   fit: () => void;
 }

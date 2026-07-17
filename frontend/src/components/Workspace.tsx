@@ -39,6 +39,12 @@ import type { RoomDetail, RoomRole } from "../types/room";
 import { getBackendUrl } from "../config/env";
 import { fetchRoomFileContent } from "../services/roomService";
 import { effectiveCanEdit } from "../utils/roomImport";
+import {
+  startNodePreview,
+  stopNodePreview,
+  writeRuntimeFile,
+  type RuntimeProjectFile,
+} from "../services/webContainerRuntime";
 
 export interface WorkspaceIdentity {
   userId: string;
@@ -142,6 +148,10 @@ const Workspace = ({ room, identity, role, canEdit }: WorkspaceProps) => {
 
   const [chatMessages, setChatMessages] = useState<ChatMessageType[]>([]);
   const [collabConnected, setCollabConnected] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [runtimeStatus, setRuntimeStatus] = useState<
+    "idle" | "starting" | "ready" | "error"
+  >("idle");
 
   const userId = identity.userId;
 
@@ -362,6 +372,44 @@ const Workspace = ({ room, identity, role, canEdit }: WorkspaceProps) => {
     return map as typeof MOCK_FILES;
   }, [room.files]);
 
+  const runtimeProjectFiles = useMemo<RuntimeProjectFile[]>(() => {
+    return (room.files ?? []).flatMap((file) => {
+      const content = fileContents[file.id] ?? file.content;
+      return typeof content === "string"
+        ? [{ path: file.path || file.id, content }]
+        : [];
+    });
+  }, [room.files, fileContents]);
+
+  const hasNodeProject = useMemo(
+    () =>
+      runtimeProjectFiles.some(
+        (file) =>
+          file.path.replace(/\\/g, "/").replace(/^\.\/+/, "") ===
+          "package.json"
+      ),
+    [runtimeProjectFiles]
+  );
+
+  useEffect(() => {
+    if (!activeFileId || runtimeStatus !== "ready") return;
+    const activeRoomFile = (room.files ?? []).find(
+      (file) => file.id === activeFileId
+    );
+    const content = fileContents[activeFileId];
+    if (!activeRoomFile || typeof content !== "string") return;
+
+    void writeRuntimeFile(activeRoomFile.path || activeRoomFile.id, content).catch(
+      (error: unknown) => {
+        console.error("[WebContainer] Failed to sync active file:", error);
+      }
+    );
+  }, [activeFileId, fileContents, room.files, runtimeStatus]);
+
+  useEffect(() => {
+    return () => stopNodePreview();
+  }, [room.id]);
+
   const webViewFileIds = useMemo(() => {
     const files = room.files ?? [];
     const findByPath = (suffix: string) =>
@@ -526,7 +574,38 @@ const Workspace = ({ room, identity, role, canEdit }: WorkspaceProps) => {
 
   const handleRunCode = async () => {
     const activeFile = openFiles.find((f) => f.id === activeFileId);
+
+    if (hasNodeProject) {
+      setRuntimeStatus("starting");
+      setPreviewUrl(null);
+      terminalRef.current?.clear();
+      if (isTerminalCollapsed) {
+        toggleTerminalPanel();
+      }
+      if (joinState !== "prompting" && isWebViewCollapsed) {
+        toggleWebViewPanel();
+      }
+
+      try {
+        await startNodePreview(runtimeProjectFiles, {
+          onOutput: (output) => terminalRef.current?.writeRaw(output),
+          onServerReady: (url) => {
+            setPreviewUrl(url);
+            setRuntimeStatus("ready");
+          },
+        });
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : "Unknown runtime error";
+        setRuntimeStatus("error");
+        terminalRef.current?.writeRaw(`\n[DevSync] ${message}\n`);
+      }
+      return;
+    }
+
     if (activeFile && activeFile.language === "html") {
+      setPreviewUrl(null);
+      setRuntimeStatus("idle");
       // Don't auto-open WebView during prompting state
       if (joinState !== "prompting" && isWebViewCollapsed) {
         toggleWebViewPanel();
@@ -972,6 +1051,8 @@ const Workspace = ({ room, identity, role, canEdit }: WorkspaceProps) => {
           htmlFileContent={htmlFileContent}
           cssFileContent={cssFileContent}
           jsFileContent={jsFileContent}
+          previewUrl={previewUrl}
+          runtimeStatus={runtimeStatus}
           toggleWebView={toggleWebView}
           joinState={joinState}
           tabsHaveOverflow={tabsHaveOverflow}

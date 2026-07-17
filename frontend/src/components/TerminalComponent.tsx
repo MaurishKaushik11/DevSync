@@ -146,6 +146,11 @@ const TerminalComponent = forwardRef<TerminalHandle, TerminalComponentProps>(
           writePrompt(term);
         }
       },
+      writeRaw: (output: string) => {
+        if (terminalInstance.current) {
+          terminalInstance.current.write(output.replace(/\r?\n/g, "\r\n"));
+        }
+      },
       clear: () => {
         if (terminalInstance.current) {
           terminalInstance.current.clear();

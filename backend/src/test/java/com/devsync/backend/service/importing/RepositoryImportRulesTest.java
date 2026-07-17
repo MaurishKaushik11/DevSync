@@ -50,6 +50,15 @@ class RepositoryImportRulesTest {
     }
 
     @Test
+    void skipsCredentialFilesBeforeImport() {
+        assertThat(RepositoryImportRules.pathContainsSkippedSegment(".env")).isTrue();
+        assertThat(RepositoryImportRules.pathContainsSkippedSegment("config/.env.production")).isTrue();
+        assertThat(RepositoryImportRules.pathContainsSkippedSegment("certs/private.pem")).isTrue();
+        assertThat(RepositoryImportRules.pathContainsSkippedSegment("credentials.json")).isTrue();
+        assertThat(RepositoryImportRules.pathContainsSkippedSegment("src/config.ts")).isFalse();
+    }
+
+    @Test
     void rejectsUnsafeRelativePaths() throws Exception {
         Path root = tempDir.resolve("repo");
         Files.createDirectories(root);

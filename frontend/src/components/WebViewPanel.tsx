@@ -6,6 +6,8 @@ const WebViewPanel = ({
   htmlContent = "",
   cssContent = "",
   jsContent = "",
+  previewUrl = null,
+  runtimeStatus = "idle",
   onClose,
 }: WebViewPanelProps) => {
   const [refreshKey, setRefreshKey] = useState(0);
@@ -84,7 +86,10 @@ const WebViewPanel = ({
           <div className="flex items-center gap-2 rounded-md bg-ink-900 border border-ink-500 px-2.5 py-1.5">
             <span className="h-1.5 w-1.5 rounded-full bg-signal flex-shrink-0" />
             <span className="font-mono text-[11px] text-mist-400 truncate">
-              preview://workspace
+              {previewUrl ??
+                (runtimeStatus === "starting"
+                  ? "Installing dependencies…"
+                  : "preview://workspace")}
             </span>
           </div>
         </div>
@@ -96,9 +101,14 @@ const WebViewPanel = ({
           title="WebView Preview"
           width="100%"
           height="100%"
-          srcDoc={srcDoc}
+          src={previewUrl ?? undefined}
+          srcDoc={previewUrl ? undefined : srcDoc}
           className="w-full h-full border-0 bg-white"
-          sandbox="allow-scripts"
+          sandbox={
+            previewUrl
+              ? "allow-scripts allow-same-origin allow-forms allow-modals allow-popups allow-downloads"
+              : "allow-scripts"
+          }
         />
       </div>
     </div>

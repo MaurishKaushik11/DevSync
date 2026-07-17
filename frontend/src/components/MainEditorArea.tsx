@@ -54,6 +54,8 @@ interface MainEditorAreaProps {
   htmlFileContent: string;
   cssFileContent: string;
   jsFileContent: string;
+  previewUrl?: string | null;
+  runtimeStatus?: "idle" | "starting" | "ready" | "error";
   toggleWebView: () => void;
   isSessionActive: boolean;
   joinState: JoinStateType;
@@ -90,6 +92,8 @@ const MainEditorArea = ({
   htmlFileContent,
   cssFileContent,
   jsFileContent,
+  previewUrl = null,
+  runtimeStatus = "idle",
   toggleWebView,
   isSessionActive,
   joinState,
@@ -277,6 +281,8 @@ const MainEditorArea = ({
             htmlContent={htmlFileContent}
             cssContent={cssFileContent}
             jsContent={jsFileContent}
+            previewUrl={previewUrl}
+            runtimeStatus={runtimeStatus}
             onClose={toggleWebView}
           />
         </div>

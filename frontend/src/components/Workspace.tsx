@@ -141,6 +141,7 @@ const Workspace = ({ room, identity, role, canEdit }: WorkspaceProps) => {
   const [isWidgetForcedHidden, setIsWidgetForcedHidden] = useState(false);
 
   const [chatMessages, setChatMessages] = useState<ChatMessageType[]>([]);
+  const [collabConnected, setCollabConnected] = useState(false);
 
   const userId = identity.userId;
 
@@ -386,10 +387,8 @@ const Workspace = ({ room, identity, role, canEdit }: WorkspaceProps) => {
     // Skip OT for collaboration-disabled (large) files; other files reconnect on switch
     isSessionActive: isSessionActive && activeFileCollaborationEnabled,
     canEdit: fileCanEdit,
-    webViewFileIds:
-      webViewFileIds.length > 0
-        ? webViewFileIds
-        : ["index.html", "style.css", "script.js"],
+    // Only subscribe to preview files that exist in this room (imported repos often omit them).
+    webViewFileIds: webViewFileIds.length > 0 ? webViewFileIds : undefined,
     onStateReceived: useCallback(
       (fileId, content, _revision, participantsFromHook) => {
         setFileContent(fileId, content);
@@ -497,10 +496,13 @@ const Workspace = ({ room, identity, role, canEdit }: WorkspaceProps) => {
       },
       [userId]
     ),
-    onConnectionStatusChange: useCallback(() => {}, []),
+    onConnectionStatusChange: useCallback((connected: boolean) => {
+      setCollabConnected(connected);
+    }, []),
     onError: useCallback(
       (error: Error | string) => {
         console.error("[App onError] Collaboration Hook Error:", error);
+        setCollabConnected(false);
         alert(
           `Collaboration Error: ${
             error instanceof Error ? error.message : error
@@ -983,7 +985,15 @@ const Workspace = ({ room, identity, role, canEdit }: WorkspaceProps) => {
       </div>
       {/* Status Bar */}
       <StatusBar
-        connectionStatus={isSessionActive ? "connected" : undefined}
+        connectionStatus={
+          !isSessionActive
+            ? undefined
+            : !activeFileCollaborationEnabled
+              ? "connected"
+              : collabConnected
+                ? "connected"
+                : "connecting"
+        }
         language={activeLanguage}
         line={cursorLine}
         column={cursorColumn}

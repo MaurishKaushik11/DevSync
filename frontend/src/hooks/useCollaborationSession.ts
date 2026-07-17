@@ -15,6 +15,10 @@ import {
   UseCollaborationSessionProps,
   UseCollaborationSessionReturn,
 } from "../types/props";
+import {
+  selectEffectiveAccessToken,
+  useAuthStore,
+} from "../store/useAuthStore";
 
 interface CursorMessage {
   documentId: string;
@@ -146,6 +150,14 @@ export const useCollaborationSession = ({
       adapterRef.current = null;
     }
 
+    const accessToken = selectEffectiveAccessToken(useAuthStore.getState());
+    if (!accessToken) {
+      handleError(
+        "[STOMP Error] Missing access token — sign in or rejoin the room before collaborating."
+      );
+      return;
+    }
+
     const socketUrl = getBackendUrl() + "/ws";
     const socket = new SockJS(socketUrl);
     const stompClient = Stomp.over(socket);
@@ -168,8 +180,9 @@ export const useCollaborationSession = ({
       // Potentially retry after a short delay or wait for an event indicating model readiness
     }
 
+    // Backend StompAuthChannelInterceptor requires Bearer JWT on CONNECT.
     stompClient.connect(
-      {},
+      { Authorization: `Bearer ${accessToken}` },
       () => {
         handleConnectionStatusChange(true);
 

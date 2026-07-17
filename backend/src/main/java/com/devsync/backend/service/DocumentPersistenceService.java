@@ -36,16 +36,31 @@ public class DocumentPersistenceService {
      */
     public void hydrateRedisIfAbsent(UUID sessionId, UUID roomId) {
         List<RoomFile> files = roomFileRepository.findByRoomId(roomId);
-        String sessionKey = sessionId.toString();
         for (RoomFile file : files) {
-            if (!file.isCollaborationEnabled()) {
-                continue;
-            }
-            String documentId = file.getName();
-            if (!otService.hasDocumentContent(sessionKey, documentId)) {
-                otService.seedDocumentContentIfAbsent(sessionKey, documentId, file.getContent());
-                log.info("Hydrated Redis doc [{}] for session [{}] from RoomFile", documentId, sessionId);
-            }
+            hydrateDocumentIfAbsent(sessionId, roomId, file.getName(), file);
+        }
+    }
+
+    /**
+     * Hydrate a single document on demand (preferred on join for large imported repos).
+     */
+    public void hydrateDocumentIfAbsent(UUID sessionId, UUID roomId, String documentId) {
+        RoomFile file = roomFileRepository.findByRoomIdAndName(roomId, documentId).orElse(null);
+        hydrateDocumentIfAbsent(sessionId, roomId, documentId, file);
+    }
+
+    private void hydrateDocumentIfAbsent(UUID sessionId, UUID roomId, String documentId, RoomFile file) {
+        if (file == null) {
+            log.debug("No RoomFile named [{}] in room [{}] to hydrate", documentId, roomId);
+            return;
+        }
+        if (!file.isCollaborationEnabled()) {
+            return;
+        }
+        String sessionKey = sessionId.toString();
+        if (!otService.hasDocumentContent(sessionKey, documentId)) {
+            otService.seedDocumentContentIfAbsent(sessionKey, documentId, file.getContent());
+            log.info("Hydrated Redis doc [{}] for session [{}] from RoomFile", documentId, sessionId);
         }
     }
 

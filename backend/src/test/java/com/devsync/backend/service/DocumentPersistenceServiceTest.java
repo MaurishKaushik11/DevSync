@@ -83,6 +83,27 @@ class DocumentPersistenceServiceTest {
     }
 
     @Test
+    void hydrateDocumentIfAbsentSeedsOnlyRequestedFile() {
+        AppProperties props = new AppProperties();
+        DocumentPersistenceService service = new DocumentPersistenceService(roomFileRepository, otService, props);
+
+        UUID sessionId = UUID.randomUUID();
+        UUID roomId = UUID.randomUUID();
+        RoomFile file = new RoomFile();
+        file.setName("README.md");
+        file.setContent("# Hello");
+        file.setCollaborationEnabled(true);
+
+        when(roomFileRepository.findByRoomIdAndName(roomId, "README.md")).thenReturn(Optional.of(file));
+        when(otService.hasDocumentContent(sessionId.toString(), "README.md")).thenReturn(false);
+
+        service.hydrateDocumentIfAbsent(sessionId, roomId, "README.md");
+
+        verify(otService).seedDocumentContentIfAbsent(sessionId.toString(), "README.md", "# Hello");
+        verify(roomFileRepository, never()).findByRoomId(any());
+    }
+
+    @Test
     void snapshotWritesPostgresFromRedis() {
         AppProperties props = new AppProperties();
         DocumentPersistenceService service = new DocumentPersistenceService(roomFileRepository, otService, props);

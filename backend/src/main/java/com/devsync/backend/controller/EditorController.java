@@ -97,7 +97,8 @@ public class EditorController {
             UUID sid = UUID.fromString(sessionId);
             roomAuthorizationService.requireCanAccessSession(auth, sid);
             UUID roomId = roomAuthorizationService.resolveRoomIdForSession(sid);
-            documentPersistenceService.hydrateRedisIfAbsent(sid, roomId);
+            // Hydrate only the joined document — full-repo hydrate stalls large imports.
+            documentPersistenceService.hydrateDocumentIfAbsent(sid, roomId, documentId);
         } catch (Exception e) {
             log.warn("Join denied for session [{}]: {}", sessionId, e.getMessage());
             return;

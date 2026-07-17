@@ -20,6 +20,7 @@ import java.util.Collections;
 import java.util.UUID;
 import com.devsync.backend.dto.UserInfoDTO;
 import com.devsync.backend.security.AuthPrincipal;
+import com.devsync.backend.service.DocumentPersistenceService;
 import com.devsync.backend.service.SessionRegistryService;
 import com.devsync.backend.service.RoomAuthorizationService;
 
@@ -29,17 +30,20 @@ public class OtController {
     private final SimpMessagingTemplate messagingTemplate;
     private final SessionRegistryService sessionRegistryService;
     private final RoomAuthorizationService roomAuthorizationService;
+    private final DocumentPersistenceService documentPersistenceService;
     private static final Logger logger = Logger.getLogger(OtController.class.getName());
 
     public OtController(
             OtService otService,
             SimpMessagingTemplate messagingTemplate,
             SessionRegistryService sessionRegistryService,
-            RoomAuthorizationService roomAuthorizationService) {
+            RoomAuthorizationService roomAuthorizationService,
+            DocumentPersistenceService documentPersistenceService) {
         this.otService = otService;
         this.messagingTemplate = messagingTemplate;
         this.sessionRegistryService = sessionRegistryService;
         this.roomAuthorizationService = roomAuthorizationService;
+        this.documentPersistenceService = documentPersistenceService;
     }
 
     private AuthPrincipal requirePrincipal(Principal principal) {
@@ -145,6 +149,9 @@ public class OtController {
 
         try {
             roomAuthorizationService.requireCanAccessSession(auth, UUID.fromString(sessionId));
+            UUID sid = UUID.fromString(sessionId);
+            UUID roomId = roomAuthorizationService.resolveRoomIdForSession(sid);
+            documentPersistenceService.hydrateDocumentIfAbsent(sid, roomId, documentId);
         } catch (Exception e) {
             logger.warning("get-document-state denied: " + e.getMessage());
             return;
